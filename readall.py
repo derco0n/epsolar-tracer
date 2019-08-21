@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 
-import time
+# import time
 
 # import the server implementation
-#from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+# from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 from test.testdata import ModbusMockClient as ModbusClient
 from pymodbus.mei_message import *
-from pyepsolartracer.registers import registers,coils
+from pyepsolartracer.registers import registers, coils
 
 # configure the client logging
 import logging
@@ -21,34 +21,34 @@ client.connect()
 
 request = ReadDeviceInformationRequest(unit=1)
 response = client.execute(request)
-print repr(response.information)
+print(repr(response.information))
 
 for reg in registers:
-    print
-    print reg
+    print()
+    print(reg)
     rr = client.read_input_registers(reg.address, 1, unit=1)
     if hasattr(rr, "getRegister"):
-        print "read_input_registers:", rr.getRegister(0)
+        print("read_input_registers:", rr.getRegister(0))
     else:
-        print "read_input_registers", str(rr)
+        print("read_input_registers", str(rr))
     rr = client.read_holding_registers(reg.address, 1, unit=1)
     if hasattr(rr, "getRegister"):
-        print "read_holding_registers:", rr.getRegister(0)
+        print("read_holding_registers:", rr.getRegister(0))
     else:
-        print "read_holding_registers:", str(rr)
+        print("read_holding_registers:", str(rr))
 
 for reg in coils:
-    print
-    print reg
-    rr =client.read_coils(reg.address, unit=1)
+    print()
+    print(reg)
+    rr = client.read_coils(reg.address, unit=1)
     if hasattr(rr, "bits"):
-        print "read_coils:", str(rr.bits)
+        print("read_coils:", str(rr.bits))
     else:
-        print "read_coils:", str(rr)
+        print("read_coils:", str(rr))
     rr = client.read_discrete_inputs(reg.address, unit=1)
     if hasattr(rr, "bits"):
-        print "read_discrete_inputs:", str(rr.bits)
+        print("read_discrete_inputs:", str(rr.bits))
     else:
-        print "read_discrete_inputs:", str(rr)
+        print("read_discrete_inputs:", str(rr))
 
 

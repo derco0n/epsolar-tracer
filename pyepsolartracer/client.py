@@ -11,6 +11,7 @@ from pyepsolartracer.registers import registerByName
 import logging
 _logger = logging.getLogger(__name__)
 
+
 class EPsolarTracerClient:
     ''' EPsolar Tracer client
     '''
@@ -71,9 +72,8 @@ class EPsolarTracerClient:
             self.client.write_registers(register.address, values, unit = self.unit)
             response = True
         return response
-    
+
+
 __all__ = [
     "EPsolarTracerClient",
 ]
-
-    

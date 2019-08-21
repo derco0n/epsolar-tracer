@@ -678,18 +678,21 @@ _registerByName = {}
 
 for reg in registers:
     name = reg.name
-    if _registerByName.has_key(name):
+    # if _registerByName.has_key(name):
+    if name in _registerByName:
         raise Exception("internal error " + name)
     _registerByName[name] = reg
 
 for reg in coils:
     name = reg.name
-    if _registerByName.has_key(name):
+    # if _registerByName.has_key(name):
+    if name in _registerByName:
         raise Exception("internal error " + name)
     _registerByName[name] = reg
 
 def registerByName(name):
-    if not _registerByName.has_key(name):
+    # if not _registerByName.has_key(name):
+    if not name in _registerByName:
         raise Exception("Unknown register "+repr(name))
     return _registerByName[name]
     
