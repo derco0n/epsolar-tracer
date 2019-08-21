@@ -1,21 +1,20 @@
 # -*- coding: iso-8859-15 -*-
 
 # import the server implementation
-import pymodbus
-import serial
-from pymodbus.pdu import ModbusRequest
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient #initialize a serial RTU client instance
-from pymodbus.transaction import ModbusRtuFramer
+#import pymodbus
+#import serial
+#from pymodbus.pdu import ModbusRequest
+#from pymodbus.client.sync import ModbusSerialClient as ModbusClient #initialize a serial RTU client instance
+#from pymodbus.transaction import ModbusRtuFramer
+from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from pymodbus.mei_message import *
+from pyepsolartracer.registers import registerByName
 
 
 import logging
 logging.basicConfig()
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
-
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
-from pymodbus.mei_message import *
-from pyepsolartracer.registers import registerByName
 
 #---------------------------------------------------------------------------#
 # Logging
