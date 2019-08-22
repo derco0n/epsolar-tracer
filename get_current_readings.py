@@ -5,7 +5,6 @@
 # This reads severals values from the EPSolar-charging-controller via RS485-USB-Cable (correct kernel-driver-module needed)
 
 from pyepsolartracer.client import EPsolarTracerClient
-from pyepsolartracer.registers import registers, coils
 
 # configure the client logging
 import logging
