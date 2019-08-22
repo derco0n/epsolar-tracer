@@ -14,7 +14,8 @@ used RS-232 and a different protocol. see https://github.com/xxv/tracer.
 
 Linux driver for Exar USB UART
 ------------------------------
-In [directory](xr_usb_serial_common-1a) there is a Linux driver for Exar based USB RS-485 adapter.  
+In [directory](xr_usb_serial_common-1a) there is a Linux driver for Exar based USB RS-485 adapter which must be compiled for your kernel.
+Tested under various kernel-versions up to 4.19 (on a Raspberry Pi).  
 [Original source](https://www.exar.com/common/content/default.aspx?id=10296)
 
 Protocol

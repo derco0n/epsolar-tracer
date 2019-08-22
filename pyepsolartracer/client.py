@@ -31,19 +31,16 @@ class EPsolarTracerClient:
         ''' Initialize a serial client instance
         '''
         self.unit = unit
-        #if serialclient == None:
         if serialclient is None:
             port = kwargs.get('port', '/dev/ttyXRUSB0')
             baudrate = kwargs.get('baudrate', 115200)
-           # self.client = ModbusClient(method='rtu', port=port, baudrate=baudrate, kwargs=kwargs)
-            # DEBUG
             self.client = ModbusClient(
                 method="rtu",
-                port="/dev/ttyXRUSB0",
+                port=port,
                 stopbits=1,
                 bytesize=8,
                 parity='N',
-                baudrate=115200
+                baudrate=baudrate
             )
         else:
             self.client = serialclient

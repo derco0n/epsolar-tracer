@@ -1,7 +1,8 @@
 
+# This reads severals values from the EPSolar-charging-controller via RS485-USB-Cable (correct kernel-driver-module needed)
+
 from pyepsolartracer.client import EPsolarTracerClient
 from pyepsolartracer.registers import registers, coils
-from test.testdata import ModbusMockClient as ModbusClient
 
 # configure the client logging
 import logging
@@ -9,14 +10,7 @@ logging.basicConfig()
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
-serialclient = ModbusClient()
-# serialclient = None
 
-#serialclient.baudrate=115200
-
-
-#client = EPsolarTracerClient(serialclient = serialclient)
-#client = EPsolarTracerClient(serialclient=serialclient)
 client = EPsolarTracerClient()
 client.connect()
 
@@ -29,16 +23,12 @@ response = client.read_input("Charging equipment rated input voltage")
 print(str(response))
 
 for reg in registers:
-    #print
-    #print(reg
     value = client.read_input(reg.name)
     print(value)
     #if value.value is not None:
     #    print(client.write_output(reg.name,value.value)
 
 for reg in coils:
-    #print
-    #print(reg
     value = client.read_input(reg.name)
     print(value)
     #print(client.write_output(reg.name,value.value)
