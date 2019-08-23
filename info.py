@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: iso-8859-15 -*-
 
 # This reads severals values from the EPSolar-charging-controller via RS485-USB-Cable (correct kernel-driver-module needed)
 
