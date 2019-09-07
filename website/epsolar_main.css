@@ -14,7 +14,8 @@ body {
 }
 
 a {
-  text-decoration: underline overline;
+  text-decoration: underline;
+  padding: 5px;
 }
 
 h1 {
@@ -37,7 +38,7 @@ nav {
   float: left;
   width: 15%;  
   background: #ccc;
-  height: 400px;
+  height: 450px;
   padding: 10px;
   text-align: left;
 }
@@ -46,7 +47,10 @@ nav {
 nav ul {
   list-style-type: none;
   padding: 0;
+  margin: 0;
 }
+
+
 
 table {
   border-collapse: collapse;
@@ -61,8 +65,8 @@ article {
   float: left;
   padding: 20px;
   width: 85%;
-  height: 400px;
-  background-color: #f1f1f1;
+  height: 450px;
+  background-color: #f1f1f1;  
 }
 
 /* Clear floats after the columns */
@@ -86,4 +90,58 @@ footer {
     width: 100%;
     height: auto;
   }
+}
+
+
+#menu {
+	font-size:12px;
+	position:absolute; /*position:relative;*/	
+	padding: 10px;
+}
+
+#menu ul {
+	list-style-type:none;
+	list-style-image:none;
+	margin:0;
+	padding:0px;
+}
+
+#menu li.topmenu {
+	float: left;
+}
+
+.topmenu a {
+	float:left;
+	width:100px;
+	text-align:center;
+}
+
+.topmenu ul{
+	display:none;
+}
+
+.topmenu a, .submenu a{
+	padding:10px;
+	color:white;
+	font-weight:bold;
+	text-decoration:none;
+	background-color:#666;
+	margin:0;
+}
+
+.submenu a{
+	font-size:10px;
+	width:100px;
+	position:relative
+	clear:both; /* special IE6 */
+}
+
+#menu a:hover, .topmenu.on a {
+	color:white;
+	background-color:#888 !important;
+}
+
+.topmenu:hover ul {
+	display:block;
+	z-index:500;
 }
