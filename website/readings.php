@@ -13,6 +13,9 @@ $command = escapeshellcmd('../json_get_current_readings.py');
 $output = shell_exec($command);
 //echo($output); //DEBUG
 
+echo("<H3>Aktuelle Werte:</H3>");	
+
+
 if ($output != NULL) {
 	$solardata=json_decode($output);
 	//var_dump($solardata);
@@ -22,7 +25,6 @@ if ($output != NULL) {
 	$batterydata=$solardata[2];
 	$loaddata=$solardata[3];
 
-	echo("<H3>Aktuelle Werte:</H3>");	
 	//Datum / Uhrzeit:
 	$heute = date("d.m.Y H:i:s");
 	echo("<div id='datum'>".$heute."</div>");
@@ -130,8 +132,8 @@ if ($output != NULL) {
 
 }
 else {
-	echo("Keine Daten empfangen, die Seite wird nun neu geladen...");
-	echo("javascript:location.reload(true)"); //(Hopefully) Reload page
+	echo("Keine Daten empfangen, die Seite wird in 3 Sekunden neu geladen...");
+	echo("<script>setTimeout(function(){window.location.reload(true);}, 3000);</script>"); //(Hopefully) Reload page after 3 seconds
 }
 echo("</body>");
 echo("</html>");
