@@ -31,8 +31,8 @@ if ($output != NULL) {
 	
 	echo("<div id='piktogramme'>");
 	//Sun/Moon-Image
-	if ($generatordata->{'pv-voltage'} > 10.0){
-	//Genug Sonneneinstrahlung (> 10 V) >> Tag
+	if ($generatordata->{'pv-voltage'} > 20.5){
+	//Genug Sonneneinstrahlung (> 20.5 V) >> Tag
 		echo("<img src='./img/sun_small.png' class='s' alt='Tag' title='Tag' />");
 	}
 	else {

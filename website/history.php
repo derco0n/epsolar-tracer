@@ -14,24 +14,125 @@ $mydbcon=new mysql($host, $user, $password, $db);
 $sqliobj=$mydbcon->getSQLIObject();
 
 //Functions
-function getdata()
+function getdata($mintimestamp, $maxtimestamp, $con)
 {
-	//TESTING (later to be filled my DATABASE)
-	$myreturn = array(
-		"[0, 100, 0, -100, 0, 100]",
-		"[100, 0, -100, 0, 100, 0]",
-		"[0, -100, 0, 100, 0, -100]",
-		"[-100, 0, 100, 0, -100, 0]",
-		"[12.5, 25, 37.5, 50, 62.5, 75]"
+	$wholedata=array();	
+
+	/*
+	$fieldnames=array(
+		"Zeitpunkt",
+		"Controller-Temperatur",
+		"Controller-Kühler-Temperatur",
+		"Generator-Spannung",
+		"Generator-Strom",
+		"Generator-Leistung",
+		"Batterie-Spannung",
+		"Batterie-Strom",
+		"Batterie-Leistung",
+		"Batterie-Ladestand",
+		"Batterie-Temperatur",
+		"Lastausgang-Spannung",
+		"Lastausgang-Strom",
+		"Lastausgang-Leistung"
+	);*/
+	
+	$fieldnames=array(		
+		"Generator-Spannung [V]",		
+		"Batterie-Spannung [V]",		
+		"Lastausgang-Spannung [V]"
 	);
 	
+	$wholedata [] = $fieldnames; //Add Fieldnames to wholedata
 	
-	//TESTING END
-    
-    return $myreturn;
+	/*
+	$statement="SELECT	
+				DATE_FORMAT(`timestamp`, '%H:%i') as 'Zeitpunkt',
+				`con-temp-main` as 'Controller-Temperatur',
+				`con-temp-heatsink` as 'Controller-K&uuml;hler-Temperatur',
+				`pv-voltage` as 'Generator-Spannung',
+				`pv-current` as 'Generator-Strom',
+				`pv-power` as 'Generator-Leistung',
+				`bat-voltage` as 'Batterie-Spannung',
+				`bat-current` as 'Batterie-Strom',
+				`bat-power` as 'Batterie-Leistung',
+				`bat-perc` as 'Batterie-Ladestand',
+				`bat-temp` as 'Batterie-Temperatur',
+				`load-voltage` as 'Lastausgang-Spannung',
+				`load-current` as 'Lastausgang-Strom',
+				`load-power` as 'Lastausgang-Leistung'
+				from epsolar_log.tbl_reading 
+				WHERE `timestamp` BETWEEN '".$mintimestamp."' AND '".$maxtimestamp."'
+				ORDER BY `timestamp` ASC";	 
+	*/
+	$statement="SELECT	
+				DATE_FORMAT(`timestamp`, '%H:%i') as 'Zeitpunkt',
+				`pv-voltage` as 'Generator-Spannung',
+				`bat-voltage` as 'Batterie-Spannung',
+				`load-voltage` as 'Lastausgang-Spannung'
+				from epsolar_log.tbl_reading 
+				WHERE `timestamp` BETWEEN '".$mintimestamp."' AND '".$maxtimestamp."'
+				ORDER BY `timestamp` ASC";	 
+	
+	
+	$data= $con->arrayquery($statement); //2D-Array [rows][fields]	
+	
+	//echo($data[0][0].": ".$data[0][1]); //DEBUG
+	//echo(json_encode($data[0])); //DEBUG
+	
+	//Determine the fieldcount
+	$numfields=sizeof($data[0]);
+	//var_dump($numfields); //DEBUG
+	
+	
+	$datalines=array(); //Rows -> lines for datavalaues
+	$xnames=array(); //Rows -> lines for x-axis-names
+	
+	$count=0;
+	while ($count < $numfields){
+		$tempcol=array_column($data, $count);
+		$tempvalcol=array(); //numeric-values of that line
+			foreach($tempcol as $tcval){
+				//Convert each value saved as string into float
+				if ($count==0) { 
+					//Names
+					$tempvalcol [] = $tcval;  //Use String data
+				}
+				else if ($count >0){
+					//Datavalues
+					$tempvalcol [] = floatval($tcval); //Convert to float
+				}
+			}
+		if ($count==0){
+			$xnames[] = json_encode($tempvalcol);
+		}
+		else if ($count>0) {
+			$datalines[] = json_encode($tempvalcol);		
+		}
+		
+		$count++;
+	}
+	
+	$wholedata [] = $xnames;
+	
+	//var_dump($datalines); //DEBUG
+	//echo(json_encode($datalines)); //DEBUG
+	
+	//var_dump($datalines); //DEBUG
+	//var_dump($myreturn); //DEBUG
+	
+	
+	
+	$wholedata [] = $datalines; //Add datalines to wholedata
+	
+	//var_dump($wholedata[1]); //DEBUG
+	
+	//return $datalines;
+	return $wholedata; //0=Fieldnames, 1=x-axis-names, 2=data
+	
 }
 
-function getlinelabels(){
+/*
+function getlinelabels($mintimestamp, $maxtimestamp){
 	//TESTING (later to be filled my DATABASE)
 	$myreturn = array(
 	"Dies",
@@ -44,14 +145,18 @@ function getlinelabels(){
 	
 	return $myreturn;
 }
+*/
 
-function getaxislabels(){
+/*
+function getaxislabels($mintimestamp, $maxtimestamp){
 	//TESTING
-	$myreturn="['00:00 Uhr', '06:00', '09:00', '12:00', '15:00', '18:00']";
+	$myreturn="['06:00', '09:00', '12:00', '15:00', '18:00','00:00']";
 	//TESTING END
 
 	return $myreturn;
 }
+*/
+
 
 //Datadefinitions
 
@@ -86,15 +191,244 @@ if (isset($_GET['timeframe'])){
 	}
 }
 
-//Generate SQL-Queries by Timeframe
+
+
+/*
+var_dump($timeframe);
+var_dump($datamode);
+*/
+
+//Main
+
+echo("<html>\r\n");
+echo("\t<head>\r\n");
+echo("\t\t<link href='epsolar_main.css' rel='stylesheet'>\r\n");
+echo("\t</head>\r\n");
+echo("\t<body>\r\n");
+//Menüif ($datamode==1){
+echo("
+		<p>
+			<div id='menu'>
+				<ul>
+					<li class='topmenu'>
+						<a href=''>Diagramme</a>
+						<ul>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=today'>Heute</a></li>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=week'>Diese Woche</a></li>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=month'>Diesen Monat</a></li>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=year'>Dieses Jahr</a></li>
+						</ul>
+					</li>
+					<li class='topmenu'>
+						<a href=''>Tabellen</a>
+						<ul>
+							<li class='submenu'><a href='./history.php?datamode=2&timeframe=today'>Heute</a></li>
+							<li class='submenu'><a href='./history.php?datamode=2&timeframe=week'>Diese Woche</a></li>
+							<li class='submenu'><a href='./history.php?datamode=2&timeframe=month'>Diesen Monat</a></li>
+							<li class='submenu'><a href='./history.php?datamode=2&timeframe=year'>Dieses Jahr</a></li>
+							<li class='submenu'><a href='./history.php?datamode=2&timeframe=allraw'>Alle Rohdaten (VORSICHT viele Daten!)</a></li>
+						</ul>
+					</li>        
+				</ul>
+			</div>
+
+		</p>");
+
+echo("
+		<p>
+			<div id='diagram'>");
+
+
+if ($datamode==1){
+	//Datamode for chart (diagramm) is set. Display Canvas
+	
+	//Render diagram
+	//Import chart.js-library
+	echo("
+				<script src='./node_modules/chart.js/dist/Chart.js'></script>");
+
+	//define new canvas-tag (where to draw)
+	echo("		<br />
+				<br />
+				<canvas id='sunchart' aria-label='sunchart' role='img'></canvas>");
+	
+	
+	
+	//Define Chartoptions
+	$chartoptions="{
+			responsive: true,
+			aspectRatio: 4.5,
+			elements: {
+				line: {
+					stacked: true,
+					tension: 0.3 //disables bezier curves when set to zero
+				}
+			},
+			scales: {			
+				yAxes: [{				
+					ticks: {
+						beginAtZero: true
+					}
+				}]
+			}
+		}";
+
+
+
+
+	//Colors
+	$linecolors=array(
+		//Green
+		"rgba(0, 255, 0, 1)",
+		"rgba(0, 200, 0, 0.2)",
+
+		//RED
+		"rgba(255, 0, 0, 1)",
+		"rgba(200, 0, 0, 0.2)",
+
+		//Blue
+		"rgba(0, 0, 255, 1)",
+		"rgba(0, 0, 200, 0.2)",
+
+		//Yellow
+		"rgba(255, 255, 0, 1)",
+		"rgba(200, 200, 0, 0.2)",
+
+		//Pink
+		"rgba(255, 0, 255, 1)",
+		"rgba(200, 0, 200, 0.2)",
+
+		//Black	
+		"rgba(255, 255, 255, 1)",
+		"rgba(200, 200, 200, 0.2)",
+
+		//Grey
+		"rgba(160, 160, 160, 1)",
+		"rgba(128, 128, 128, 0.2)",
+	);
+
+	$maxdatalines=sizeof($linecolors)/2; //Maximum drawable line due to defined colors...
+	// echo($linecolors[0]); //DEBUG
+
+		switch ($timeframe) {
+		case "today":			
+			$mintimestamp=date("Y-m-d")." 00:00:00"; 
+			$maxtimestamp=date("Y-m-d")." 23:59:59"; 
+			break;
+		case "week":
+			//echo("<h3>Daten dieser Woche:</h3>");			
+			$mintimestamp=date("Y-m-d", strtotime('-1 week monday 00:00:00')); 
+			$maxtimestamp=date("Y-m-d", strtotime('sunday 23:59:59'));
+			break;
+		case "month":
+			//echo("<h3>Daten dieses Monats:</h3>");
+			$mintimestamp=date("Y-m-d", strtotime('first day of this month')); 
+			$maxtimestamp=date("Y-m-d", strtotime('last day of this month'));
+			break;
+		case "year":
+			//echo("<h3>Daten dieses Jahres:</h3>");
+			$mintimestamp=date("Y-m-d", strtotime(date('Y-01-01'))); 
+			$maxtimestamp=date("Y-m-d", strtotime(date('Y-12-31')));
+			break;		
+		}	
+	
+	//QUERY-Database an get result prepared for chart
+	$chardata=getdata($mintimestamp, $maxtimestamp, $mydbcon); //0=Fieldnames, 1=x-axis-names, 2=data
+	
+	//var_dump($chardata); //DEBUG
+	
+	//Axis-labels
+	//$datalabels=getaxislabels($mintimestamp, $maxtimestamp, $mydbcon);
+	$datalabels=$chardata[1][0];	
+	
+	//Data-Labels
+	//$charlabels=getlinelabels($mintimestamp, $maxtimestamp, $mydbcon)[0];
+	$charlabels=$chardata[0];
+	
+	//RAW-Data
+	//$dataarray=getdata($mintimestamp, $maxtimestamp, $mydbcon)[1];
+	$dataarray=$chardata[2];
+
+	//echo(sizeof($dataarray)); //DEBUG
+	if (sizeof($dataarray) <= $maxdatalines)
+	{
+		//define Data to render
+		$chartdata="{
+				labels: ".$datalabels.",
+				datasets: [";
+
+	//Prepare each dataset
+		$count=0;
+		$colorcount=0;
+		foreach ($dataarray as $datarow)
+			{
+					if ($count != 0 && $count<sizeof($dataarray)){
+						//Not first or last entry in the dataarray
+							//Therefore after the first and before the last one
+								//put a ", " after each dataset
+						$chartdata=$chartdata.", ";
+
+					}
+					$chartdata=$chartdata."{label: '".$charlabels[$count]."',	data: ".$datarow.",
+					 borderColor: [
+						'".$linecolors[$colorcount]."'
+					],
+					backgroundColor: [
+						'".$linecolors[$colorcount+1]."'
+					],           
+					borderWidth: 1
+				}";
+			$count++;
+			$colorcount=$colorcount+2;
+			}
+
+		$chartdata=$chartdata."]}";
+
+	}
+
+	//echo($chartdata); //DEBUG
+
+
+	//define script to draw chart in canvas
+	echo("
+					<script>
+						var ctx = document.getElementById('sunchart').getContext('2d');
+						var sunchart = new Chart(ctx, {
+						type: 'line',
+						data: ".$chartdata.",
+						options: ".$chartoptions."
+						});
+					</script>
+				");
+	
+	//Fetch data
+	
+
+	
+	
+	
+	//$mydbcon->tablequery($statement);
+	
+	
+}
+else if ($datamode==2){
+	echo("		<br />
+				<br />
+				<br />");
+	
+
+	
+	//Datamode for table is set. Render Table
+	//Make a Table-Query;
+	//Generate SQL-Queries by Timeframe
 	switch ($timeframe) {
 		case "today":
 			echo("<h3>Daten von Heute:</h3>");
 			$mintimestamp=date("Y-m-d")." 00:00:00"; 
 			$maxtimestamp=date("Y-m-d")." 23:59:59"; 
 			
-			$statement="SELECT 
-				`timestamp` as 'Zeitpunkt',
+			$statement="SELECT				
+				DATE_FORMAT(`timestamp`, '%H:%i') as 'Zeitpunkt',
 				concat(`con-temp-main`, ' °C') as 'Controller-Temperatur',
 				concat(`con-temp-heatsink`, ' °C') as 'Controller-K&uuml;hler-Temperatur',
 				concat(`pv-voltage`, ' V') as 'Generator-Spannung',
@@ -207,193 +541,9 @@ if (isset($_GET['timeframe'])){
 				ORDER BY `timestamp` DESC";
 			break;
 	}
-
-/*
-var_dump($timeframe);
-var_dump($datamode);
-*/
-
-//Main
-
-echo("<html>\r\n");
-echo("\t<head>\r\n");
-echo("\t\t<link href='epsolar_main.css' rel='stylesheet'>\r\n");
-echo("\t</head>\r\n");
-echo("\t<body>\r\n");
-//Menüif ($datamode==1){
-echo("
-		<p>
-			<div id='menu'>
-				<ul>
-					<li class='topmenu'>
-						<a href=''>Diagramme</a>
-						<ul>
-							<li class='submenu'><a href='./history.php?datamode=1&timeframe=today'>Heute</a></li>
-							<li class='submenu'><a href='./history.php?datamode=1&timeframe=week'>Diese Woche</a></li>
-							<li class='submenu'><a href='./history.php?datamode=1&timeframe=month'>Diesen Monat</a></li>
-							<li class='submenu'><a href='./history.php?datamode=1&timeframe=year'>Dieses Jahr</a></li>
-						</ul>
-					</li>
-					<li class='topmenu'>
-						<a href=''>Tabellen</a>
-						<ul>
-							<li class='submenu'><a href='./history.php?datamode=2&timeframe=today'>Heute</a></li>
-							<li class='submenu'><a href='./history.php?datamode=2&timeframe=week'>Diese Woche</a></li>
-							<li class='submenu'><a href='./history.php?datamode=2&timeframe=month'>Diesen Monat</a></li>
-							<li class='submenu'><a href='./history.php?datamode=2&timeframe=year'>Dieses Jahr</a></li>
-							<li class='submenu'><a href='./history.php?datamode=2&timeframe=allraw'>Alle Rohdaten (VORSICHT viele Daten!)</a></li>
-						</ul>
-					</li>        
-				</ul>
-			</div>
-
-		</p>");
-
-echo("
-		<p>
-			<div id='diagram'>");
-
-
-if ($datamode==1){
-	//Datamode for chart (diagramm) is set. Display Canvas
-	
-	//Render diagram
-	//Import chart.js-library
-	echo("
-				<script src='./node_modules/chart.js/dist/Chart.js'></script>");
-
-	//define new canvas-tag (where to draw)
-	echo("		<br />
-				<br />
-				<canvas id='sunchart' aria-label='sunchart' role='img'></canvas>");
-	
-	$datalabels=getaxislabels();
-	
-	//Define Chartoptions
-	$chartoptions="{
-			responsive: true,
-			aspectRatio: 4.5,
-			elements: {
-				line: {
-					stacked: true,
-					tension: 0.3 //disables bezier curves when set to zero
-				}
-			},
-			scales: {			
-				yAxes: [{				
-					ticks: {
-						beginAtZero: true
-					}
-				}]
-			}
-		}";
-
-
-
-
-	//Colors
-	$linecolors=array(
-		//Green
-		"rgba(0, 255, 0, 1)",
-		"rgba(0, 200, 0, 0.2)",
-
-		//RED
-		"rgba(255, 0, 0, 1)",
-		"rgba(200, 0, 0, 0.2)",
-
-		//Blue
-		"rgba(0, 0, 255, 1)",
-		"rgba(0, 0, 200, 0.2)",
-
-		//Yellow
-		"rgba(255, 255, 0, 1)",
-		"rgba(200, 200, 0, 0.2)",
-
-		//Pink
-		"rgba(255, 0, 255, 1)",
-		"rgba(200, 0, 200, 0.2)",
-
-		//Black	
-		"rgba(255, 255, 255, 1)",
-		"rgba(200, 200, 200, 0.2)",
-
-		//Grey
-		"rgba(160, 160, 160, 1)",
-		"rgba(128, 128, 128, 0.2)",
-	);
-
-	$maxdatalines=sizeof($linecolors)/2; //Maximum drawable line due to defined colors...
-	// echo($linecolors[0]); //DEBUG
-
-	//Data-Labels
-	$charlabels=getlinelabels();
-	//RAW-Data
-	$dataarray=getdata();
-
-	echo(sizeof($dataarray));
-	if (sizeof($dataarray) <= $maxdatalines)
-	{
-		//define Data to render
-		$chartdata="{
-				labels: ".$datalabels.",
-				datasets: [";
-
-	//Prepare each dataset
-		$count=0;
-		$colorcount=0;
-		foreach ($dataarray as $datarow)
-			{
-					if ($count != 0 && $count<sizeof($dataarray)){
-						//Not first or last entry in the dataarray
-							//Therefore after the first and before the last one
-								//put a ", " after each dataset
-						$chartdata=$chartdata.", ";
-
-					}
-					$chartdata=$chartdata."{label: '".$charlabels[$count]."',	data: ".$datarow.",
-					 borderColor: [
-						'".$linecolors[$colorcount]."'
-					],
-					backgroundColor: [
-						'".$linecolors[$colorcount+1]."'
-					],           
-					borderWidth: 1
-				}";
-			$count++;
-			$colorcount=$colorcount+2;
-			}
-
-		$chartdata=$chartdata."]}";
-
-	}
-
-	//echo($chartdata); //DEBUG
-
-
-	//define script to draw chart in canvas
-	echo("
-					<script>
-						var ctx = document.getElementById('sunchart').getContext('2d');
-						var sunchart = new Chart(ctx, {
-						type: 'line',
-						data: ".$chartdata.",
-						options: ".$chartoptions."
-						});
-					</script>
-				");
 	
 	
 	
-}
-else if ($datamode==2){
-	echo("		<br />
-				<br />
-				<br />");
-	
-
-	
-	//Datamode for table is set. Render Table
-	//Make a Table-Query;
 	$mydbcon->tablequery($statement);
 	
 }

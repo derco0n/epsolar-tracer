@@ -6,8 +6,8 @@ geschrieben von Dennis Marx
 */
 class mysql 
 	{
-	const  ClassVersion=0.41; //Versionsnummer dieser Klasse
-	const  LastChangeDate="07.09.2019"; //Datum der letzteAenderung
+	const  ClassVersion=0.42; //Versionsnummer dieser Klasse
+	const  LastChangeDate="12.09.2019"; //Datum der letzteAenderung
 
 	private $server=""; //Host
 	private $user=""; //Benutzername
@@ -381,9 +381,33 @@ class mysql
 			}
 		}
 
+	public function arrayquery($statement, $assoc=false)
+		{
+			//Returns the resultarray
 		
 		
+		$result=$this->mysqliconnection->query($statement)
+			or die ("MySQL-Error: " . $this->mysqliconnection->error); //Abfrage ausfuehren
 		
+		
+		$myreturn = array();
+		if ($assoc=true){
+			while ($row = $result->fetch_array(MYSQLI_NUM)) {
+				$myreturn[] = $row;
+			}			
+		}
+		else {
+				while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+				$myreturn[] = $row;
+			}			
+		}
+		
+		//$result->free();
+		
+		//echo(sizeof($myreturn));//DEBUG
+		
+		return $myreturn;
+		}
 		
 	public function jsonarrayquery($statement)
 		{
@@ -850,26 +874,9 @@ class mysql
 			}
 		
 		}
-	/*
 	
-	//##################################################
-	public function array_result($sql = NULL, &$row = '') 
-    		{ 
-        	$inc = ''; 
-        	//if($sql === NULL) //Drei Gleichzeichen?? Tippfehler?
-		if($sql == NULL)
-        		{ 
-            		$inc = $this->last_injection; 
-            		} 
-		else 	{ 
-            		$inc = $sql; 
-        		} 
-         
-        	$row = mysql_fetch_array($inc); 
-         
-        	return($row); 
-    		}
-		*/
+	
+
 		
 	//##################################################	
 	
