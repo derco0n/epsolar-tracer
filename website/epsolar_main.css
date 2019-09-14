@@ -120,7 +120,7 @@ footer {
 	display:none;
 }
 
-.topmenu a, .submenu a{
+.topmenu a, .submenu a a{
 	padding:10px;
 	color:white;
 	font-weight:bold;
@@ -145,3 +145,4 @@ footer {
 	display:block;
 	z-index:500;
 }
+

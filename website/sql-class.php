@@ -6,8 +6,8 @@ geschrieben von Dennis Marx
 */
 class mysql 
 	{
-	const  ClassVersion=0.42; //Versionsnummer dieser Klasse
-	const  LastChangeDate="12.09.2019"; //Datum der letzteAenderung
+	const  ClassVersion=0.43; //Versionsnummer dieser Klasse
+	const  LastChangeDate="14.09.2019"; //Datum der letzteAenderung
 
 	private $server=""; //Host
 	private $user=""; //Benutzername
@@ -381,30 +381,47 @@ class mysql
 			}
 		}
 
-	public function arrayquery($statement, $assoc=false)
+	public function arrayquery($statement, $assc=False, $includefieldnames=True)
 		{
 			//Returns the resultarray
-		
+		//echo("Assoc=".$assc); //DEBUG
 		
 		$result=$this->mysqliconnection->query($statement)
 			or die ("MySQL-Error: " . $this->mysqliconnection->error); //Abfrage ausfuehren
+			
+		$myreturn = array();	
 		
 		
-		$myreturn = array();
-		if ($assoc=true){
-			while ($row = $result->fetch_array(MYSQLI_NUM)) {
+		if ($assc){	
+			//echo("ASSOC"); //DEBUG
+			while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
 				$myreturn[] = $row;
 			}			
 		}
 		else {
-				while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
-				$myreturn[] = $row;
+			//echo("NUM"); //DEBUG
+			if ($includefieldnames){
+				$finfo = $result->fetch_fields();
+				//var_dump($finfo); //DEBUG
+				$fnamerow= array();
+				foreach ($finfo as $val) {
+					$fnamerow [] = $val->name; //Add all fieldnames
+				}
+				//var_dump($fnamerow); //DEBUG
+				//Add fieldnames to returnvalue
+				$myreturn[] = $fnamerow;
+				
+			}
+			while ($row = $result->fetch_array(MYSQLI_NUM)) {
+				$myreturn[] = $row; //Add all resultrows to returnvalue
 			}			
 		}
 		
 		//$result->free();
 		
 		//echo(sizeof($myreturn));//DEBUG
+		
+		$result->free();
 		
 		return $myreturn;
 		}
@@ -529,7 +546,7 @@ class mysql
 			
 				{
 					
-				echo("\n\t<td>".$this->mysqli_field_name($result, $count)."</td>");
+				echo("\n\t<th>".$this->mysqli_field_name($result, $count)."</th>");
 				$count++; //Counter erhoehen
 				}
 			

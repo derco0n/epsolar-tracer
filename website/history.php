@@ -14,78 +14,137 @@ $mydbcon=new mysql($host, $user, $password, $db);
 $sqliobj=$mydbcon->getSQLIObject();
 
 //Functions
-function getdata($mintimestamp, $maxtimestamp, $con)
+//function getdata($mintimestamp, $maxtimestamp, $con, $type="voltages")
+function getdata($timeframe, $con, $type="voltages")
 {
 	$wholedata=array();	
-
-	/*
-	$fieldnames=array(
-		"Zeitpunkt",
-		"Controller-Temperatur",
-		"Controller-Kühler-Temperatur",
-		"Generator-Spannung",
-		"Generator-Strom",
-		"Generator-Leistung",
-		"Batterie-Spannung",
-		"Batterie-Strom",
-		"Batterie-Leistung",
-		"Batterie-Ladestand",
-		"Batterie-Temperatur",
-		"Lastausgang-Spannung",
-		"Lastausgang-Strom",
-		"Lastausgang-Leistung"
-	);*/
 	
-	$fieldnames=array(		
-		"Generator-Spannung [V]",		
-		"Batterie-Spannung [V]",		
-		"Lastausgang-Spannung [V]"
-	);
+	$fieldnames=array();
 	
-	$wholedata [] = $fieldnames; //Add Fieldnames to wholedata
+	switch ($timeframe) {
+		case "today":			
+			$mintimestamp=date("Y-m-d")." 00:00:00"; 
+			$maxtimestamp=date("Y-m-d")." 23:59:59"; 
+			$querytimestamp="CONCAT(DATE_FORMAT(`timestamp`,'%H:%i'), ' Uhr') as 'Zeitpunkt', ";
+			$querygroupby="";
+			break;
+		case "week":
+			//echo("<h3>Daten dieser Woche:</h3>");			
+			$mintimestamp=date("Y-m-d", strtotime('-1 week monday 00:00:00')); 
+			$maxtimestamp=date("Y-m-d", strtotime('sunday 23:59:59'));
+			$querytimestamp="CONCAT(DATE_FORMAT(`timestamp`,'%W:%H'), ' Uhr') as 'Zeitpunkt', ";
+			$querygroupby="";
+			break;
+		case "month":
+			//echo("<h3>Daten dieses Monats:</h3>");
+			$mintimestamp=date("Y-m-d", strtotime('first day of this month')); 
+			$maxtimestamp=date("Y-m-d", strtotime('last day of this month'));
+			break;
+		case "year":
+			//echo("<h3>Daten dieses Jahres:</h3>");
+			$mintimestamp=date("Y-m-d", strtotime(date('Y-01-01'))); 
+			$maxtimestamp=date("Y-m-d", strtotime(date('Y-12-31')));
+			break;		
+		}	
 	
-	/*
-	$statement="SELECT	
-				DATE_FORMAT(`timestamp`, '%H:%i') as 'Zeitpunkt',
-				`con-temp-main` as 'Controller-Temperatur',
-				`con-temp-heatsink` as 'Controller-K&uuml;hler-Temperatur',
-				`pv-voltage` as 'Generator-Spannung',
-				`pv-current` as 'Generator-Strom',
-				`pv-power` as 'Generator-Leistung',
-				`bat-voltage` as 'Batterie-Spannung',
-				`bat-current` as 'Batterie-Strom',
-				`bat-power` as 'Batterie-Leistung',
-				`bat-perc` as 'Batterie-Ladestand',
-				`bat-temp` as 'Batterie-Temperatur',
-				`load-voltage` as 'Lastausgang-Spannung',
-				`load-current` as 'Lastausgang-Strom',
-				`load-power` as 'Lastausgang-Leistung'
-				from epsolar_log.tbl_reading 
-				WHERE `timestamp` BETWEEN '".$mintimestamp."' AND '".$maxtimestamp."'
-				ORDER BY `timestamp` ASC";	 
-	*/
-	$statement="SELECT	
-				DATE_FORMAT(`timestamp`, '%H:%i') as 'Zeitpunkt',
-				`pv-voltage` as 'Generator-Spannung',
-				`bat-voltage` as 'Batterie-Spannung',
-				`load-voltage` as 'Lastausgang-Spannung'
-				from epsolar_log.tbl_reading 
-				WHERE `timestamp` BETWEEN '".$mintimestamp."' AND '".$maxtimestamp."'
-				ORDER BY `timestamp` ASC";	 
+	switch($type){
+		case "all":
+			$queryfields="			
+			`pv-voltage` as 'Generator-Spannung [V]',
+			`bat-voltage` as 'Batterie-Spannung [V]',
+			`load-voltage` as 'Lastausgang-Spannung [V]',
+			`pv-power` as 'Generator-Leistung [W]',
+			`bat-power` as 'Batterie-Leistung [W]',
+			`load-power` as 'Lastausgang-Leistung [W]',
+			`pv-current` as 'Generator-Strom [A]',
+			`bat-current` as 'Batterie-Strom [A]',
+			`load-current` as 'Lastausgang-Strom [A]',
+			`bat-perc` as 'Batterieladestand [%]',
+			`bat-temp` as 'Batterie-Temperatur [°C]',
+			`con-temp-main` as 'Controller-Temperatur [°C]',
+			`con-temp-heatsink` as 'Controller-Heatsink-Temperatur [°C]'
+			";
+			break;
+		case "voltages":
+			$queryfields="			
+			`pv-voltage` as 'Generator-Spannung [V]',
+			`bat-voltage` as 'Batterie-Spannung [V]',
+			`load-voltage` as 'Lastausgang-Spannung [V]'
+			";
+			break;
+		case "power":
+			$queryfields="			
+			`pv-power` as 'Generator-Leistung [W]',
+			`bat-power` as 'Batterie-Leistung [W]',
+			`load-power` as 'Lastausgang-Leistung [W]'
+			";
+			break;
+		case "current":
+			$queryfields="
+			DATE_FORMAT(`timestamp`,'%H:%i') as 'Zeitpunkt',
+			`pv-current` as 'Generator-Strom [A]',
+			`bat-current` as 'Batterie-Strom [A]',
+			`load-current` as 'Lastausgang-Strom [A]'
+			";
+			break;
+		case "battery":
+			$queryfields="
+			DATE_FORMAT(`timestamp`,'%H:%i') as 'Zeitpunkt',
+			`bat-perc` as 'Batterieladestand [%]',
+			`bat-temp` as 'Batterie-Temperatur [°C]'
+			";
+			break;
+	}
 	
 	
-	$data= $con->arrayquery($statement); //2D-Array [rows][fields]	
 	
-	//echo($data[0][0].": ".$data[0][1]); //DEBUG
-	//echo(json_encode($data[0])); //DEBUG
+	
+	$statement="
+	SELECT "
+		.$querytimestamp.
+		$queryfields."
+	from 
+	epsolar_log.tbl_reading 
+	WHERE `timestamp` 
+	BETWEEN '".$mintimestamp."' AND '".$maxtimestamp."' 
+	".$querygroupby."
+	ORDER BY `timestamp` ASC";	 
+	
+	$resdata= $con->arrayquery($statement, False, True); //2D-Array [rows][fields]	
 	
 	//Determine the fieldcount
-	$numfields=sizeof($data[0]);
-	//var_dump($numfields); //DEBUG
+	$numfields=sizeof($resdata[0]); //Result contains fieldnames
+	
+	//Process the field names in the first line of the resultset
+	$fnames=array();
+	$count=1; //Skip the first name as its the timestamp
+	while ($count < $numfields){		
+		$fnames [] = $resdata[0][$count];
+		$count++;
+	}
+	
+	//var_dump($resdata); //DEBUG
 	
 	
+	//Fetch the data from the result but cutting of the fieldnames
+	$data=array();
+	$count=1; //Skip the first line as that are the fieldnames
+	while ($count < sizeof($resdata)){		
+		$data [] = $resdata[$count];
+		$count++;
+	}
+	
+	//var_dump($data); //DEBUG
+	
+	$fieldnames=$fnames;
+	
+	//var_dump($fieldnames); //DEBUG
+	
+	$wholedata [] = $fieldnames; //Add Fieldnames to wholedata
+		
 	$datalines=array(); //Rows -> lines for datavalaues
 	$xnames=array(); //Rows -> lines for x-axis-names
+	
 	
 	$count=0;
 	while ($count < $numfields){
@@ -112,16 +171,8 @@ function getdata($mintimestamp, $maxtimestamp, $con)
 		$count++;
 	}
 	
-	$wholedata [] = $xnames;
-	
-	//var_dump($datalines); //DEBUG
-	//echo(json_encode($datalines)); //DEBUG
-	
-	//var_dump($datalines); //DEBUG
-	//var_dump($myreturn); //DEBUG
-	
-	
-	
+	$wholedata [] = $xnames; // Add names of the X-Axis to wholedata
+
 	$wholedata [] = $datalines; //Add datalines to wholedata
 	
 	//var_dump($wholedata[1]); //DEBUG
@@ -131,38 +182,40 @@ function getdata($mintimestamp, $maxtimestamp, $con)
 	
 }
 
-/*
-function getlinelabels($mintimestamp, $maxtimestamp){
-	//TESTING (later to be filled my DATABASE)
-	$myreturn = array(
-	"Dies",
-	"sind",
-	"bloß",
-	"Demo",
-	"Daten!"
-	);
-	//TESTING END
-	
-	return $myreturn;
-}
-*/
-
-/*
-function getaxislabels($mintimestamp, $maxtimestamp){
-	//TESTING
-	$myreturn="['06:00', '09:00', '12:00', '15:00', '18:00','00:00']";
-	//TESTING END
-
-	return $myreturn;
-}
-*/
-
 
 //Datadefinitions
 
 //initialize with dummy-data
 $datamode=0;
+$cdtype="voltages";
 $timeframe="";
+
+if (isset($_GET['type'])){
+	/*
+typess:
+1=voltages
+2=power
+3=current
+4=battery
+*/
+	switch($_GET['type']) {
+		case "0":
+			$cdtype="all";
+			break;
+		case "1":
+			$cdtype="voltages";
+			break;
+		case "2":
+			$cdtype="power";
+			break;
+		case "3":
+			$cdtype="current";
+			break;
+		case "4":
+			$cdtype="battery";
+			break;
+	}	
+}
 
 if (isset($_GET['datamode'])){
 /*
@@ -213,10 +266,19 @@ echo("
 					<li class='topmenu'>
 						<a href=''>Diagramme</a>
 						<ul>
-							<li class='submenu'><a href='./history.php?datamode=1&timeframe=today'>Heute</a></li>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=today&type=1'>Heute (Spannungen)</a></li>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=today&type=2'>Heute (Leistung)</a></li>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=today&type=3'>Heute (Str&ouml;me)</a></li>							
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=today&type=4'>Heute (Batterie)</a></li>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=today&type=0'>Heute (Alles)</a></li>
+							<li class='submenu'><a href='./history.php?datamode=1&timeframe=week'&type=1>Diese Woche (Spannungen)</a></li>
+	"./*
+
 							<li class='submenu'><a href='./history.php?datamode=1&timeframe=week'>Diese Woche</a></li>
 							<li class='submenu'><a href='./history.php?datamode=1&timeframe=month'>Diesen Monat</a></li>
 							<li class='submenu'><a href='./history.php?datamode=1&timeframe=year'>Dieses Jahr</a></li>
+	*/
+	 "
 						</ul>
 					</li>
 					<li class='topmenu'>
@@ -280,7 +342,7 @@ if ($datamode==1){
 	$linecolors=array(
 		//Green
 		"rgba(0, 255, 0, 1)",
-		"rgba(0, 200, 0, 0.2)",
+		"rgba(0, 200, 0, 0.2)",		
 
 		//RED
 		"rgba(255, 0, 0, 1)",
@@ -297,43 +359,54 @@ if ($datamode==1){
 		//Pink
 		"rgba(255, 0, 255, 1)",
 		"rgba(200, 0, 200, 0.2)",
-
+		
+		//Violett
+		"rgba(128, 0, 196, 1)",
+		"rgba(96, 0, 128, 0.2)",
+		
+		//Cyan
+		"rgba(0, 160, 160, 1)",
+		"rgba(0, 128, 128, 0.2)",
+		
+		//Orange
+		"rgba(255, 128, 00, 1)",
+		"rgba(128, 96, 0, 0.2)",	
+		
+		//Brown
+		"rgba(160, 96, 0, 1)",
+		"rgba(96, 64, 0, 0.2)",
+		
+		//Dark-Green
+		"rgba(0, 160, 0, 0.2)",
+		"rgba(0, 96, 0, 0.2)",
+		
+		//Dark-RED
+		"rgba(196, 0, 0, 1)",
+		"rgba(160, 0, 0, 0.2)",
+		
+		//Dark-Blue
+		"rgba(0, 0, 160, 1)",
+		"rgba(0, 0, 128, 0.2)",
+		
 		//Black	
-		"rgba(255, 255, 255, 1)",
-		"rgba(200, 200, 200, 0.2)",
+		"rgba(0, 0, 0, 1)",
+		"rgba(40, 40, 40, 0.2)",
 
 		//Grey
 		"rgba(160, 160, 160, 1)",
 		"rgba(128, 128, 128, 0.2)",
+		
+		
 	);
 
 	$maxdatalines=sizeof($linecolors)/2; //Maximum drawable line due to defined colors...
 	// echo($linecolors[0]); //DEBUG
 
-		switch ($timeframe) {
-		case "today":			
-			$mintimestamp=date("Y-m-d")." 00:00:00"; 
-			$maxtimestamp=date("Y-m-d")." 23:59:59"; 
-			break;
-		case "week":
-			//echo("<h3>Daten dieser Woche:</h3>");			
-			$mintimestamp=date("Y-m-d", strtotime('-1 week monday 00:00:00')); 
-			$maxtimestamp=date("Y-m-d", strtotime('sunday 23:59:59'));
-			break;
-		case "month":
-			//echo("<h3>Daten dieses Monats:</h3>");
-			$mintimestamp=date("Y-m-d", strtotime('first day of this month')); 
-			$maxtimestamp=date("Y-m-d", strtotime('last day of this month'));
-			break;
-		case "year":
-			//echo("<h3>Daten dieses Jahres:</h3>");
-			$mintimestamp=date("Y-m-d", strtotime(date('Y-01-01'))); 
-			$maxtimestamp=date("Y-m-d", strtotime(date('Y-12-31')));
-			break;		
-		}	
+
 	
 	//QUERY-Database an get result prepared for chart
-	$chardata=getdata($mintimestamp, $maxtimestamp, $mydbcon); //0=Fieldnames, 1=x-axis-names, 2=data
+	//$chardata=getdata($mintimestamp, $maxtimestamp, $mydbcon, $cdtype); //returns: 0=Fieldnames, 1=x-axis-names, 2=data
+	$chardata=getdata($timeframe, $mydbcon, $cdtype); //returns: 0=Fieldnames, 1=x-axis-names, 2=data
 	
 	//var_dump($chardata); //DEBUG
 	
