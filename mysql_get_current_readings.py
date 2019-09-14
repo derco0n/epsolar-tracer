@@ -109,7 +109,7 @@ try:
                 str(data[0].get('con-temp-heatsink')) + ", " + \
                 str(data[1].get('pv-voltage')) + ", " + \
                 str(data[1].get('pv-current')) + ", " + \
-                str(data[1].get('pv-current')) + ", " + \
+                str(data[1].get('pv-power')) + ", " + \
                 str(data[2].get('bat-voltage')) + ", " + \
                 str(data[2].get('bat-current')) + ", " + \
                 str(data[2].get('bat-power')) + ", " + \
