@@ -33,7 +33,7 @@ print(client.read_input("Charging equipment output voltage"))  # Momentary Volta
 print(client.read_input("Charging equipment output current"))  # Momentary Current of Battery-Output
 print(client.read_input("Charging equipment output power"))  # Momentary Power of Battery-Output
 print("")
-print("LoAD::")
+rprint("LoAD::")
 print(client.read_input("Discharging equipment output voltage"))  # Momentary Voltage of LOAD-Output
 print(client.read_input("Discharging equipment output current"))  # Momentary Current of LOAD-Output
 print(client.read_input("Discharging equipment output power"))  # Momentary Power of LOAD-Output

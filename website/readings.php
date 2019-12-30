@@ -74,6 +74,68 @@ if ($output != NULL) {
 		echo("<img src='".$battimage."' class='s' alt='Batterietemperatur: ".$batterydata->{'bat-temp'}." °C' title='Batterietemperatur: ".$batterydata->{'bat-temp'}." °C' />");
 	}
 
+
+	//Battery-Laden/Entladen
+	$batchargestate=0; //holding
+	$batchargestext="Ladestand wird gehalten."; //holding
+	$batcimage="";
+
+/*
+ Todo: 
+ I think this part could be done better, but i'm not sure how at the moment,
+ The controller reports wattage for battery as high as pv-genereator even if battery is fully charged.
+ to my understanding it must be as follows:
+
+ if battery is not fully charged and pv is generating more power than needed for load, the battery must be charging
+ if it is generating not enough power for the load, the battery must be discharging
+ if battery is fully charged and pv is generating enough power for load, the battery must be at hold
+
+*/
+
+	if ($batterydata->{'bat-perc'} >= 98) {
+		//Battery is already fully charged
+		$batchargestate=0; //holding
+//		echo("Battery is on hold."); //Debug
+		$batchargestext="Ladestand wird gehalten."; //holding
+		$batcimage="./img/battery-hold.png";
+	
+	}
+	else {
+		//Battery is not full yet
+		$wattagetolerance=1.0; //Measurement-tolerance in watts for gap between pv-power and bat-load-power
+		
+		if (($generatordata->{'pv-power'}+$wattagetolerance) >= ($batterydata->{'bat-power'}+$loaddata->{'load-power'})) {
+			//Battery is not fully charged, but enough power is available
+  		    	$batchargestate=1; //charging
+//			echo("Battery is charging."); //Debug
+			$batcimage="./img/battery-charge.png";
+			$batchargestext="Batterie wird geladen."; //holding
+		}
+		else {
+			//PV-Generator generates not enough power for battery and load
+			//Batterypower is consumed to power the load
+			if ($batterydata->{'bat-perc'} >= 5/* % */) {
+				//Battery has still a bit capacity
+				$batchargestate=2; //discharging
+//				echo("Battery is discharging."); //Debug
+				$batcimage="./img/battery-discharge.png";
+				$batchargestext="Batterie wird entladen."; //holding
+			}
+			else {
+				//Battery is is nearly depleted, not enough power is available
+  		    		$batchargestate=3; //nearly depleted
+//				echo("Battery is low."); //Debug
+				$batcimage="./img/battery-discharge.png";
+				$batchargestext="Batterie wird entladen."; //holding
+		
+			}
+		}
+
+	}
+
+	
+	echo("<img src='".$batcimage."' class='s' alt='".$batchargestext."' title='".$batchargestext."' />");
+
 	
 	
 	echo("</div>"); //Piktogramme ENDE
