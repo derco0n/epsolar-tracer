@@ -222,6 +222,7 @@ if (isset($_GET['datamode'])){
 datamodes:
 1=chart
 2=table
+3=csv
 */	
 	switch($_GET['datamode']) {
 		case "1":
@@ -229,6 +230,9 @@ datamodes:
 			break;
 		case "2":
 			$datamode=2;
+			break;
+		case "3":
+			$datamode=3;
 			break;
 	}	
 }
@@ -252,7 +256,6 @@ var_dump($datamode);
 */
 
 //Main
-
 echo("<html>\r\n");
 echo("\t<head>\r\n");
 echo("\t\t<link href='epsolar_main.css' rel='stylesheet'>\r\n");
@@ -289,6 +292,16 @@ echo("
 							<li class='submenu'><a href='./history.php?datamode=2&timeframe=month'>Diesen Monat</a></li>
 							<li class='submenu'><a href='./history.php?datamode=2&timeframe=year'>Dieses Jahr</a></li>
 							<li class='submenu'><a href='./history.php?datamode=2&timeframe=allraw'>Alle Rohdaten (VORSICHT viele Daten!)</a></li>
+						</ul>
+					</li>
+					<li class='topmenu'>
+						<a href=''>CSV-Export</a>
+						<ul>
+							<li class='submenu'><a href='./csvexport.php?datamode=3&timeframe=today'>Heute</a></li>
+							<li class='submenu'><a href='./csvexport.php?datamode=3&timeframe=week'>Diese Woche</a></li>
+							<li class='submenu'><a href='./csvexport.php?datamode=3&timeframe=month'>Diesen Monat</a></li>
+							<li class='submenu'><a href='./csvexport.php?datamode=3&timeframe=year'>Dieses Jahr</a></li>
+							<li class='submenu'><a href='./csvexport.php?datamode=3&timeframe=allraw'>Alle Rohdaten (VORSICHT viele Daten!)</a></li>
 						</ul>
 					</li>        
 				</ul>
@@ -614,21 +627,19 @@ else if ($datamode==2){
 				ORDER BY `timestamp` DESC";
 			break;
 	}
-	
-	
-	
+
+
+	//Show Table
 	$mydbcon->tablequery($statement);
-	
+
+
 }
+
 else {
 	//No Data-Presentation-Mode selected...
 	echo("<br /><br /><br />Bitte eine Darstellung ausw&auml;hlen.");
 	
 }
-
-
-
-
 
 echo("
 			</div>

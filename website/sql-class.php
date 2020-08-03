@@ -6,8 +6,8 @@ geschrieben von Dennis Marx
 */
 class mysql 
 	{
-	const  ClassVersion=0.43; //Versionsnummer dieser Klasse
-	const  LastChangeDate="14.09.2019"; //Datum der letzteAenderung
+	const  ClassVersion=0.44; //Versionsnummer dieser Klasse
+	const  LastChangeDate="03.08.2020"; //Datum der letzteAenderung
 
 	private $server=""; //Host
 	private $user=""; //Benutzername
@@ -461,7 +461,68 @@ class mysql
 		}
 		
 	
+	//##################################################	
+	public function csvquery($statement, $filename) //SQL-Abfrage - Ausgabe als .csv-datei
+	{
+		$result=$this->mysqliconnection->query($statement); //Abfrage ausfuehren
+		
+			
+			
+		if ($result==NULL) //Wenn dabei ein Fehler auftritt...
+			{
+			echo("Fehler bei ausf&uuml;hren der Abfrage. -> " . $this->mysqliconnection->error);
+			exit;
+			}
 
+		if($result->num_rows > 0){
+		    $delimiter = ";";
+		    		    
+		    //create a file pointer
+		    $f = fopen('php://memory', 'w');
+		    
+		    //set column headers
+			$count=0;  //Spaltencounter setzen
+			$fieldcount=$this->mysqliconnection->field_count;
+			
+			$heads=array();
+
+			//Spaltenkoepfe generieren
+			while ($count <= $fieldcount-1) //Feldnamen ermitteln und ausgeben -> Feldnummer Feld1=0, Feld2=1, Feld3=2, ...
+				{
+				$fname=$this->mysqli_field_name($result, $count);
+				//var_dump($fname);
+				array_push($heads, $fname);
+				$count++; //Counter erhoehen
+				}
+			
+			
+			
+			fputcsv($f, $heads, $delimiter);
+			
+		    //output each row of the data, format line as csv and write to file pointer
+		    while($row = $result->fetch_assoc()){
+		        //$status = ($row['status'] == '1')?'Active':'Inactive';
+		        //$lineData = array($row['id'], $row['name'], $row['email'], $row['phone'], $row['created'], $status);
+		        fputcsv($f, $row, $delimiter);
+		    }
+		    
+
+
+		    //move back to beginning of file
+		    fseek($f, 0);
+		    
+		    //set headers to download file rather than displayed
+		    header('Content-Type: text/csv');
+		    header('Content-Disposition: attachment; filename="' . $filename . '";');
+		    //output all remaining data on a file pointer
+		    fpassthru($f);
+		    
+
+		}
+		exit;
+
+
+	}
 	
 	//##################################################	
 	//tablequery(String SQL-Statement, [Int Tabellenrahmen=1,] [Int Spalte_mit_zu_kovertierendem_Datum=-1,] [Bool Zeilen/Spaltenanzahl ausgeben=True,] [String Feldfarbe1="#DADADA",] [String Feldfarbe2="#AAAAAA",] [String Spaltenkopffarbe="#999999"])
@@ -477,13 +538,8 @@ class mysql
 			
 			$colswitch=1;
 
-			
-			
-			
 			//$result=mysql_query($statement, $this->connid); //Abfrage ausfuehren
 			$result=$this->mysqliconnection->query($statement); //Abfrage ausfuehren
-		
-			
 			
 			if ($result==NULL) //Wenn dabei ein Fehler auftritt...
 				{
